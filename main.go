@@ -20,9 +20,9 @@ import (
 var iface = flag.String("i", "lo0", "Interface to get packets from")
 var logAllPackets = flag.Bool("v", false, "Logs every packet in great detail")
 
-// Build a simple HTTP request parser using tcpassembly.StreamFactory and tcpassembly.Stream interfaces
+// Disable kernel ICMP responses with this:
+// sudo sh -c 'echo "1" > /proc/sys/net/ipv4/icmp_echo_ignore_all'
 
-// httpStreamFactory implements tcpassembly.StreamFactory
 type httpStreamFactory struct{}
 
 // httpStream will handle the actual decoding of http requests.

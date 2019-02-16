@@ -20,6 +20,6 @@ pping() {
 
 go build main.go 
 set -x
-pping yahoo.com -c 1
+pping yahoo.com -c 2
 
 sudo ./main -i ${interface}

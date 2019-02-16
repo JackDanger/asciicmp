@@ -38,36 +38,46 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Println("reading in packets")
-	// Read in packets, pass to assembler.
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 	packets := packetSource.Packets()
-	ticker := time.Tick(time.Minute)
+	timeout := time.NewTimer(2 * time.Second)
 	for {
 		select {
 		case packet := <-packets:
+			fmt.Println("")
 			// A nil packet indicates the end of a pcap file.
 			if packet == nil {
 				return
 			}
-			if *logAllPackets {
-				log.Println(packet)
+			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
+				fmt.Println("NetworkLayer")
+				fmt.Println(packet.NetworkLayer().LayerContents())
+				fmt.Println(packet.NetworkLayer().LayerPayload())
+				fmt.Println(packet.NetworkLayer().NetworkFlow())
+				src, dest := packet.NetworkLayer().NetworkFlow().Endpoints()
+				fmt.Println("src:", src, src.EndpointType())
+				fmt.Println("dest:", dest, dest.EndpointType())
+				fmt.Println("")
+				fmt.Println("Whole packet:", packet.String())
+				fmt.Println("")
+				fmt.Println("Dump packet:", packet.Dump())
+				if packet.TransportLayer() != nil {
+					log.Println("unexpected TransportLayer: ", packet.TransportLayer())
+				}
+				continue
 			}
-			fmt.Printf("LayerType %#v\n", packet.NetworkLayer().LayerType())
-			fmt.Printf("NetworkLayer %#v\n", packet.NetworkLayer())
-			fmt.Printf("TransportLayer %#v\n", packet.TransportLayer())
 			if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
+				log.Println(packet.NetworkLayer().LayerType())
 				log.Println("Unusable packet")
-				log.Println(packet)
 				fmt.Printf("WHOLE PACKET main.go:103 %#v\n", packet)
 				continue
 			}
 			tcp := packet.TransportLayer().(*layers.TCP)
 			fmt.Printf("main.go:68 %#v\n", tcp)
 
-		case <-ticker:
+		case <-timeout.C:
 			// Every minute, flush connections that haven't seen activity in the past 2 minutes.
-			fmt.Printf(".")
+			return
 		}
 	}
 }

@@ -49,31 +49,36 @@ func main() {
 			if packet == nil {
 				return
 			}
+			if packet.TransportLayer() != nil {
+				log.Println("TransportLayer:", packet.TransportLayer())
+			}
 			if packet.NetworkLayer().LayerType() == layers.LayerTypeIPv4 {
-				fmt.Println("NetworkLayer")
 				fmt.Println(packet.NetworkLayer().LayerContents())
 				fmt.Println(packet.NetworkLayer().LayerPayload())
-				fmt.Println(packet.NetworkLayer().NetworkFlow())
-				src, dest := packet.NetworkLayer().NetworkFlow().Endpoints()
-				fmt.Println("src:", src, src.EndpointType())
-				fmt.Println("dest:", dest, dest.EndpointType())
-				fmt.Println("")
-				fmt.Println("Whole packet:", packet.String())
-				fmt.Println("")
-				fmt.Println("Dump packet:", packet.Dump())
+				fmt.Println(packet.NetworkLayer().NetworkFlow(), packet.NetworkLayer().NetworkFlow().EndpointType())
+				src, _ := packet.NetworkLayer().NetworkFlow().Endpoints()
+
+				if src.Raw()[0] == 10 || src.Raw()[0] == 192 || src.Raw()[0] == 72 || src.Raw()[0] == 127 {
+					fmt.Println("Internal source – outbound", src)
+					fmt.Println("")
+					fmt.Println("Dump packet:", packet.Dump())
+					fmt.Printf("Layer count: %d\n", len(packet.Layers()))
+					layer1 := packet.Layers()[0]
+					layer2 := packet.Layers()[1]
+					fmt.Printf("main.go:69 %#v\n", layer2)
+					layer3 := packet.Layers()[2]
+					fmt.Printf("main.go:71 %#v\n", layer3)
+					layer4 := packet.Layers()[3]
+					fmt.Printf("main.go:73 %#v\n", layer4)
+
+				} else {
+					fmt.Println("External source – inbound", src.Raw())
+				}
+
 				if packet.TransportLayer() != nil {
 					log.Println("unexpected TransportLayer: ", packet.TransportLayer())
 				}
-				continue
 			}
-			if packet.NetworkLayer() == nil || packet.TransportLayer() == nil || packet.TransportLayer().LayerType() != layers.LayerTypeTCP {
-				log.Println(packet.NetworkLayer().LayerType())
-				log.Println("Unusable packet")
-				fmt.Printf("WHOLE PACKET main.go:103 %#v\n", packet)
-				continue
-			}
-			tcp := packet.TransportLayer().(*layers.TCP)
-			fmt.Printf("main.go:68 %#v\n", tcp)
 
 		case <-timeout.C:
 			// Every minute, flush connections that haven't seen activity in the past 2 minutes.

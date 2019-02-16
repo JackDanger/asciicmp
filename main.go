@@ -13,7 +13,7 @@ import (
 func main() {
 	fmt.Println("starting ...")
 	defer fmt.Println("... done")
-	// c, err := icmp.ListenPacket("udp6", "fe80::1%en0")
+
 	c, err := icmp.ListenPacket("ip4:icmp", "192.168.0.1")
 	if err != nil {
 		log.Fatal(err)
@@ -21,7 +21,7 @@ func main() {
 	defer c.Close()
 
 	wm := icmp.Message{
-		Type: ipv4.ICMPTypeEchoRequest, Code: 0,
+		Type: ipv4.ICMPTypeEchoReply,
 		Body: &icmp.Echo{
 			ID: os.Getpid() & 0xffff, Seq: 1,
 			Data: []byte("HELLO-R-U-THERE"),
@@ -30,9 +30,10 @@ func main() {
 	wb, err := wm.Marshal(nil)
 
 	if err != nil {
+		fmt.Printf("main.go:34 %#v\n", err)
 		log.Fatal(err)
 	}
-	if _, err := c.WriteTo(wb, &net.UDPAddr{IP: net.ParseIP("ff02::1"), Zone: "en0"}); err != nil {
+	if _, err := c.WriteTo(wb, &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Zone: "lo0"}); err != nil {
 		log.Fatal(err)
 	}
 

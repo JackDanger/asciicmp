@@ -7,20 +7,21 @@ import (
 	"os"
 
 	"golang.org/x/net/icmp"
-	"golang.org/x/net/ipv6"
+	"golang.org/x/net/ipv4"
 )
 
 func main() {
 	fmt.Println("starting ...")
 	defer fmt.Println("... done")
-	c, err := icmp.ListenPacket("udp6", "fe80::1%en0")
+	// c, err := icmp.ListenPacket("udp6", "fe80::1%en0")
+	c, err := icmp.ListenPacket("ip4:icmp", "192.168.0.1")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer c.Close()
 
 	wm := icmp.Message{
-		Type: ipv6.ICMPTypeEchoRequest, Code: 0,
+		Type: ipv4.ICMPTypeEchoRequest, Code: 0,
 		Body: &icmp.Echo{
 			ID: os.Getpid() & 0xffff, Seq: 1,
 			Data: []byte("HELLO-R-U-THERE"),
@@ -45,7 +46,7 @@ func main() {
 		log.Fatal(err)
 	}
 	switch rm.Type {
-	case ipv6.ICMPTypeEchoReply:
+	case ipv4.ICMPTypeEchoReply:
 		log.Printf("got reflection from %v", peer)
 	default:
 		log.Printf("got %+v; want echo reply", rm)

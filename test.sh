@@ -1,7 +1,25 @@
 #!/bin/bash
 
+interface=$1
+if [[ -z "${interface}" ]]; then
+  >&2 echo "USAGE: ${0} interface"
+  exit 1
+fi
+
 set -euo pipefail
 
+pping() {
+  echo "in"
+  set -x
+  if uname | grep -q 'Darwin'; then
+    ping -S $(ipconfig getifaddr ${interface}) $@ &>/dev/null &
+  else
+    ping -I ${interface} $@ &>/dev/null &
+  fi
+}
+
 go build main.go 
-(sleep 1 && ping yahoo.com -S 192.168.7.57 -c 1 &>/dev/null) &
-sudo ./main -i en0
+set -x
+pping yahoo.com -c 1
+
+sudo ./main -i ${interface}

@@ -1,0 +1,5 @@
+[dependencies]
+smoltcp = "0.4"
+
+[dependencies]
+smoltcp = { version = "0.4", default-features = false, features = ["log"] }
